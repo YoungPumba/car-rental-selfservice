@@ -5,6 +5,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const carRoutes = require('./routes/carRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const reservationRoutes = require('./routes/reservationRoutes');
+
 
 
 const app = express();
@@ -17,6 +19,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/cars', carRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
