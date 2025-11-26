@@ -7,6 +7,7 @@ import CarList from './pages/CarList.jsx';
 import MyReservations from './pages/MyReservations.jsx';
 import AdminCars from './pages/AdminCars.jsx';
 import AdminReservations from './pages/AdminReservations.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
 
 function App() {
   return (
@@ -17,8 +18,22 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/cars" element={<CarList />} />
           <Route path="/my-reservations" element={<MyReservations />} />
-          <Route path="/admin/cars" element={<AdminCars />} />
-          <Route path="/admin/reservations" element={<AdminReservations />} />
+          <Route
+            path="/admin/cars"
+            element={
+              <AdminRoute>
+                <AdminCars />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/reservations"
+            element={
+              <AdminRoute>
+                <AdminReservations />
+              </AdminRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>
