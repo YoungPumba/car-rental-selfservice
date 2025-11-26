@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { auth, requireAdmin } = require('../middleware/authMiddleware');
 const Car = require('../models/Car');
+const Reservation = require('../models/Reservation');
 
 const router = express.Router();
 
@@ -160,5 +161,101 @@ router.delete('/cars/:id', async (req, res) => {
       .json({ message: 'Błąd serwera podczas usuwania samochodu' });
   }
 });
+
+/**
+ * GET /api/admin/reservations
+ * Lista wszystkich rezerwacji (dla admina)
+ */
+router.get('/reservations', async (req, res) => {
+  try {
+    const reservations = await Reservation.find()
+      .populate('userId', 'firstName lastName email')
+      .populate('carId', 'brand model registrationNumber')
+      .sort({ createdAt: -1 });
+
+    return res.json(reservations);
+  } catch (err) {
+    console.error('Admin get reservations error:', err);
+    return res
+      .status(500)
+      .json({ message: 'Błąd serwera podczas pobierania rezerwacji' });
+  }
+});
+
+/**
+ * GET /api/admin/reservations/:id
+ * Szczegóły konkretnej rezerwacji
+ */
+router.get('/reservations/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const reservation = await Reservation.findById(id)
+      .populate('userId', 'firstName lastName email phone')
+      .populate('carId', 'brand model registrationNumber');
+
+    if (!reservation) {
+      return res
+        .status(404)
+        .json({ message: 'Rezerwacja nie została znaleziona' });
+    }
+
+    return res.json(reservation);
+  } catch (err) {
+    console.error('Admin get reservation details error:', err);
+    return res
+      .status(500)
+      .json({ message: 'Błąd serwera podczas pobierania rezerwacji' });
+  }
+});
+
+/**
+ * PATCH /api/admin/reservations/:id/status
+ * Zmiana statusu rezerwacji przez admina
+ */
+router.patch(
+  '/reservations/:id/status',
+  [
+    body('status')
+      .isIn(['pending', 'confirmed', 'cancelled', 'completed'])
+      .withMessage('Nieprawidłowy status rezerwacji'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    try {
+      const reservation = await Reservation.findById(id);
+      if (!reservation) {
+        return res
+          .status(404)
+          .json({ message: 'Rezerwacja nie została znaleziona' });
+      }
+
+      reservation.status = status;
+      await reservation.save();
+
+       await reservation.populate([
+        { path: 'userId', select: 'firstName lastName email' },
+        {
+          path: 'carId',
+          select: 'brand model registrationNumber',
+        },
+      ]);
+
+      return res.json(reservation);
+    } catch (err) {
+      console.error('Admin update reservation status error:', err);
+      return res
+        .status(500)
+        .json({ message: 'Błąd serwera podczas zmiany statusu rezerwacji' });
+    }
+  }
+);
 
 module.exports = router;
